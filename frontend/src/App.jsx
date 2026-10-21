@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import NavBar from "./components/NavBar";
+import { useState } from "react";
+import Sidebar from "./components/Sidebar";
 import { useAuth } from "./auth/AuthContext";
 import ProtectedRoute, { roleHome } from "./auth/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
@@ -14,9 +15,14 @@ function Home() {
 }
 
 export default function App() {
+  const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="app-shell">
-      <NavBar />
+    <div className={user ? "app-shell with-sidebar" : "app-shell"}>
+      {user && <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />}
+      {user && (
+        <button className="menu-toggle" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>☰</button>
+      )}
       <div className="page-content">
         <Routes>
           <Route path="/login" element={<LoginPage />} />

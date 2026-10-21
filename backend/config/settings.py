@@ -95,7 +95,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Postgres server isn't available (e.g. quick review on a laptop with
 # nothing installed) -- functionally equivalent for development/testing.
 
-if os.environ.get("DB_ENGINE", "postgres") == "sqlite":
+if os.environ.get("DB_ENGINE", "postgres").strip().lower() == "sqlite":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

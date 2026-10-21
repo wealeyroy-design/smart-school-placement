@@ -45,7 +45,7 @@ export default function StudentSelfView() {
   return (
     <>
       <div className="card">
-        <h2>Your profile</h2>
+        <h2 id="profile">Your profile</h2>
         <div className="stat-row">
           <div className="stat-tile">
             <div className="value">{profile.county}</div>
@@ -65,20 +65,20 @@ export default function StudentSelfView() {
       </div>
 
       <div className="card">
-        <h2>Your placement</h2>
+        <h2 id="placement">Your placement</h2>
         <PlacementCard placement={placement} loading={placement === undefined} />
       </div>
 
       {profile.has_results && (
         <div className="card">
-          <h2>Nearby schools</h2>
+          <h2 id="nearby">Nearby schools</h2>
           <NearbySchools studentId={profile.id} />
         </div>
       )}
 
       {placement && (
         <div className="card">
-          <h2>Appeals</h2>
+          <h2 id="appeals">Appeals</h2>
           <AppealPanel studentId={profile.id} appeals={appeals} onSubmitted={loadAppeals} />
         </div>
       )}

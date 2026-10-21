@@ -37,7 +37,7 @@ export default function SchoolAdminPortal() {
   return (
     <>
       <div className="card">
-        <h2>Your schools</h2>
+        <h2 id="schools">Your schools</h2>
         {schools.length === 0 ? (
           <p className="muted">You don't manage any schools yet. Add one below.</p>
         ) : (
@@ -69,12 +69,12 @@ export default function SchoolAdminPortal() {
       {selected && (
         <div className="grid-2">
           <div className="card">
-            <h2>Capacity & details</h2>
+            <h2 id="details">Capacity & details</h2>
             <SchoolForm school={selected} onSaved={loadSchools} />
           </div>
 
           <div className="card">
-            <h2>Placed students ({placedStudents?.length ?? "…"})</h2>
+            <h2 id="placed">Placed students ({placedStudents?.length ?? "…"})</h2>
             {placedStudents === undefined ? (
               <p className="muted">Loading...</p>
             ) : placedStudents.length === 0 ? (

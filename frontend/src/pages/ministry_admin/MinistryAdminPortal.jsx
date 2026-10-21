@@ -24,7 +24,7 @@ export default function MinistryAdminPortal() {
   return (
     <>
       <div className="card">
-        <h2>Run placement algorithm</h2>
+        <h2 id="run">Run placement algorithm</h2>
         <TriggerRunPanel
           onCompleted={() => {
             loadAnalytics();
@@ -33,12 +33,12 @@ export default function MinistryAdminPortal() {
       </div>
 
       <div className="card">
-        <h2>Placement analytics</h2>
+        <h2 id="analytics">Placement analytics</h2>
         <AnalyticsDashboard analytics={analytics} />
       </div>
 
       <div className="card">
-        <h2>Appeals</h2>
+        <h2 id="appeals">Appeals</h2>
         <AppealsManagement
           appeals={appeals}
           onChanged={() => {

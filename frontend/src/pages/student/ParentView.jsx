@@ -58,7 +58,7 @@ export default function ParentView() {
   return (
     <>
       <div className="card">
-        <h2>Your children</h2>
+        <h2 id="children">Your children</h2>
         <select value={selectedId ?? ""} onChange={(e) => setSelectedId(Number(e.target.value))}>
           {children.map((c) => (
             <option key={c.id} value={c.id}>
@@ -70,14 +70,14 @@ export default function ParentView() {
 
       {selected && (
         <div className="card">
-          <h2>{selected.full_name}'s placement</h2>
+          <h2 id="placement">{selected.full_name}'s placement</h2>
           <PlacementCard placement={placement} loading={placement === undefined} />
         </div>
       )}
 
       {placement && (
         <div className="card">
-          <h2>Appeals</h2>
+          <h2 id="appeals">Appeals</h2>
           <AppealPanel studentId={selectedId} appeals={appeals} onSubmitted={loadAppeals} />
         </div>
       )}
