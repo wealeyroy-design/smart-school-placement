@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../api/client";
 import AppealPanel from "../../components/AppealPanel";
+import LocationFinder from "../../components/LocationFinder";
 import NearbySchools from "../../components/NearbySchools";
 import PlacementCard from "../../components/PlacementCard";
 import StudentRegistrationForm from "./StudentRegistrationForm";
@@ -75,6 +76,11 @@ export default function StudentSelfView() {
           <NearbySchools studentId={profile.id} />
         </div>
       )}
+
+      <div className="card">
+        <h2 id="locate">Find schools near my location</h2>
+        <LocationFinder />
+      </div>
 
       {placement && (
         <div className="card">

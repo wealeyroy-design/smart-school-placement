@@ -321,6 +321,8 @@ class DistanceView(APIView):
                 "county": schools_by_id[school.school_id].county,
                 "available_slots": schools_by_id[school.school_id].available_slots,
                 "distance_km": round(dist, 2),
+                "latitude": schools_by_id[school.school_id].latitude,
+                "longitude": schools_by_id[school.school_id].longitude,
             }
             for school, dist in candidates
         ]

@@ -9,10 +9,30 @@ const ROLE_LABELS = {
 };
 
 const LINKS = {
-  student: [["profile", "Profile"], ["placement", "Placement"], ["nearby", "Nearby schools"], ["appeals", "Appeals"]],
-  parent: [["children", "My children"], ["placement", "Placement"], ["appeals", "Appeals"]],
-  school_admin: [["schools", "My schools"], ["details", "Capacity & details"], ["placed", "Placed students"]],
-  ministry_admin: [["run", "Run placement"], ["analytics", "Analytics"], ["appeals", "Appeals"]],
+  student: [
+    ["profile", "Profile"],
+    ["placement", "Placement"],
+    ["nearby", "Nearby schools"],
+    ["locate", "Find near me"],
+    ["appeals", "Appeals"],
+  ],
+  parent: [
+    ["children", "My children"],
+    ["placement", "Placement"],
+    ["locate", "Find near me"],
+    ["appeals", "Appeals"],
+  ],
+  school_admin: [
+    ["schools", "My schools"],
+    ["details", "Capacity & details"],
+    ["placed", "Placed students"],
+  ],
+  ministry_admin: [
+    ["run", "Run placement"],
+    ["locate", "Distance checker"],
+    ["analytics", "Analytics"],
+    ["appeals", "Appeals"],
+  ],
 };
 
 export default function Sidebar({ open, onClose }) {

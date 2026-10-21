@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../api/client";
+import LocationFinder from "../../components/LocationFinder";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 import AppealsManagement from "./AppealsManagement";
 import TriggerRunPanel from "./TriggerRunPanel";
@@ -30,6 +31,15 @@ export default function MinistryAdminPortal() {
             loadAnalytics();
           }}
         />
+      </div>
+
+      <div className="card">
+        <h2 id="locate">Distance checker</h2>
+        <p className="muted">
+          "Calculate distance to schools" from any point, using the placement algorithm's own
+          distance scoring.
+        </p>
+        <LocationFinder />
       </div>
 
       <div className="card">

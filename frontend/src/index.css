@@ -526,6 +526,105 @@ select {
   cursor: pointer;
 }
 
+/* ---------- Location finder & offline map ---------- */
+
+.location-finder {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.finder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.finder-actions .btn-primary,
+.finder-actions .btn-secondary {
+  align-self: flex-start;
+}
+
+.map-wrap {
+  margin: 0.25rem 0;
+}
+
+.offline-map {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+}
+
+.map-ring-label {
+  font-size: 9px;
+  fill: #6b7280;
+  font-family: inherit;
+}
+
+.map-you-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #124a2b;
+  font-family: inherit;
+}
+
+.map-caption {
+  margin-top: 0.4rem;
+  max-width: 420px;
+}
+
+.school-list {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.75rem;
+  background: #fbfdfc;
+}
+
+.school-list .school-list-item > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.map-link {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.map-link:hover {
+  text-decoration: underline;
+}
+
+.manual-coordinates {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.9rem;
+  background: #fbfdfc;
+}
+
+.manual-coordinates summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.manual-coordinates form {
+  margin-top: 0.9rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.manual-coordinates form label {
+  flex: 1;
+  min-width: 140px;
+}
+
 /* ================= Dashboard shell (sidebar layout) ================= */
 :root { --sidebar-w: 248px; }
 

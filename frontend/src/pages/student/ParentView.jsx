@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../api/client";
 import AppealPanel from "../../components/AppealPanel";
+import LocationFinder from "../../components/LocationFinder";
 import PlacementCard from "../../components/PlacementCard";
 
 export default function ParentView() {
@@ -81,6 +82,11 @@ export default function ParentView() {
           <AppealPanel studentId={selectedId} appeals={appeals} onSubmitted={loadAppeals} />
         </div>
       )}
+
+      <div className="card">
+        <h2 id="locate">Find schools near my location</h2>
+        <LocationFinder />
+      </div>
     </>
   );
 }
