@@ -93,6 +93,15 @@ npm run build        # produces frontend/dist/
 - [ ] Verify end-to-end on the live domain: login, placement run, analytics,
       appeals, and the three role portals (student / parent, school admin,
       ministry admin).
+- [ ] **"Use my current location" needs HTTPS in production.** The browser only
+      grants geolocation on a secure origin (`https://`, or `localhost` during
+      development). On a plain-HTTP public domain the button will be blocked by
+      the browser and the manual coordinate entry remains the fallback. So make
+      sure the live site is served over TLS.
+- [ ] No map account, API key or third-party map service is required at any
+      point: the offline schematic map is drawn from the coordinates already in
+      the database, and the optional "map" links point at OpenStreetMap
+      (free, no sign-in).
 
 ## 6. Optional — flagged as future work in the proposal
 

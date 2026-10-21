@@ -5,9 +5,40 @@ export default function StudentRegistrationForm({ onRegistered }) {
   const [form, setForm] = useState({ county: "", home_latitude: "", home_longitude: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   function update(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  }
+
+  function fillMyLocation() {
+    setError("");
+    if (!("geolocation" in navigator)) {
+      setError("This browser cannot share a location. Type your coordinates below instead.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((f) => ({
+          ...f,
+          home_latitude: position.coords.latitude.toFixed(6),
+          home_longitude: position.coords.longitude.toFixed(6),
+        }));
+        setLocating(false);
+      },
+      (geoError) => {
+        setLocating(false);
+        if (geoError.code === 1) {
+          setError(
+            "Location permission was blocked. Allow location for this site from your browser's address bar, or type your coordinates below."
+          );
+        } else {
+          setError("Could not determine your location. Type your coordinates below instead.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
   }
 
   async function handleSubmit(e) {
@@ -65,8 +96,19 @@ export default function StudentRegistrationForm({ onRegistered }) {
             />
           </label>
         </div>
+        <div className="finder-actions">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={fillMyLocation}
+            disabled={locating}
+          >
+            {locating ? "Locating..." : "Fill in my current location"}
+          </button>
+        </div>
         <p className="muted">
-          Tip: you can find your coordinates by right-clicking your location on Google Maps.
+          Your browser asks permission once - no map account, no sign-in, no internet connection
+          needed. You can also type the coordinates manually.
         </p>
         <button type="submit" disabled={submitting}>
           {submitting ? "Saving..." : "Complete registration"}
