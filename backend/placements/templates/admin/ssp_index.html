@@ -1,0 +1,35 @@
+{% extends "admin/index.html" %}
+{% load ssp_admin %}
+{% block content %}
+{% ssp_admin_summary as s %}
+<style>
+  .ssp-dash { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:0 0 18px; }
+  .ssp-tile { background:var(--body-bg); border:1px solid var(--hairline-color); border-top:3px solid #1d6f42; border-radius:8px; padding:12px 14px; }
+  .ssp-tile b { display:block; font-size:22px; color:#124a2b; }
+  .ssp-tile span { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--body-quiet-color); }
+  .ssp-tile.warn { border-top-color:#d4a017; }
+  .ssp-run { display:flex; flex-wrap:wrap; align-items:center; gap:12px; background:#f2f8f4; border:1px solid #cfe3d7; border-radius:8px; padding:12px 14px; margin-bottom:18px; color:#1f2937; }
+  .ssp-run a.button { background:#1d6f42; color:#fff; padding:8px 14px; border-radius:6px; }
+  .ssp-help { font-size:13px; color:var(--body-quiet-color); margin:0 0 16px; }
+</style>
+<p class="ssp-help">Back office for the Smart School Placement system. Students, parents and school administrators use the web app; this site lets you see and edit every record directly.</p>
+<div class="ssp-dash">
+  <div class="ssp-tile"><b>{{ s.students }}</b><span>Students</span></div>
+  <div class="ssp-tile"><b>{{ s.with_results }}</b><span>With exam results</span></div>
+  <div class="ssp-tile"><b>{{ s.schools }}</b><span>Schools</span></div>
+  <div class="ssp-tile"><b>{{ s.placements }}</b><span>Placements</span></div>
+  <div class="ssp-tile warn"><b>{{ s.pending_appeals }}</b><span>Appeals to decide</span></div>
+</div>
+<div class="ssp-run">
+  {% if s.latest_run %}
+    <div><strong>Latest run #{{ s.latest_run.id }}</strong> ({{ s.latest_run.started_at|date:"j M Y, H:i" }}):
+      {{ s.latest_run.students_placed }}/{{ s.latest_run.students_considered }} placed,
+      average {{ s.latest_run.average_distance_km }} km
+      {% if s.latest_run.baseline_average_distance_km %}vs {{ s.latest_run.baseline_average_distance_km }} km merit-only baseline{% endif %}.</div>
+  {% else %}
+    <div>No placement has been run yet.</div>
+  {% endif %}
+  <a class="button" href="{{ s.run_url }}">Run placement algorithm</a>
+</div>
+{{ block.super }}
+{% endblock %}

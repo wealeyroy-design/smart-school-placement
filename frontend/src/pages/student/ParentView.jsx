@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import api from "../../api/client";
 import AppealPanel from "../../components/AppealPanel";
 import LocationFinder from "../../components/LocationFinder";
+import PageHeader from "../../components/PageHeader";
 import PlacementCard from "../../components/PlacementCard";
 
 export default function ParentView() {
@@ -58,6 +59,11 @@ export default function ParentView() {
 
   return (
     <>
+      <PageHeader
+        title="Parent/Guardian Portal"
+        subtitle="Follow your children's placement results, submit appeals and find nearby schools."
+      />
+
       <div className="card">
         <h2 id="children">Your children</h2>
         <select value={selectedId ?? ""} onChange={(e) => setSelectedId(Number(e.target.value))}>
@@ -67,6 +73,22 @@ export default function ParentView() {
             </option>
           ))}
         </select>
+        {selected && (
+          <div className="stat-row" style={{ marginTop: "1rem", marginBottom: 0 }}>
+            <div className="stat-tile">
+              <div className="value">{selected.county}</div>
+              <div className="label">Home county</div>
+            </div>
+            <div className="stat-tile">
+              <div className="value">{selected.has_results ? Number(selected.exam_score).toFixed(1) : "—"}</div>
+              <div className="label">Exam score</div>
+            </div>
+            <div className="stat-tile">
+              <div className="value">{children.length}</div>
+              <div className="label">Linked children</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {selected && (

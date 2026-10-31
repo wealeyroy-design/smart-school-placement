@@ -29,7 +29,7 @@ export default function AppealsManagement({ appeals, onChanged }) {
   if (appeals.length === 0) return <p className="muted">No appeals have been submitted.</p>;
 
   return (
-    <table>
+    <table className="appeals-table">
       <thead>
         <tr>
           <th>Student</th>
@@ -42,8 +42,8 @@ export default function AppealsManagement({ appeals, onChanged }) {
       <tbody>
         {appeals.map((a) => (
           <tr key={a.id}>
-            <td>{a.student_name}</td>
-            <td style={{ maxWidth: 260 }}>{a.reason}</td>
+            <td className="nowrap">{a.student_name}</td>
+            <td className="reason">{a.reason}</td>
             <td>
               <span className={`badge ${STATUS_BADGE[a.status] || ""}`}>{a.status.replace("_", " ")}</span>
             </td>

@@ -24,15 +24,20 @@ class StudentSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     username = serializers.CharField(source="user.username", read_only=True)
     has_results = serializers.ReadOnlyField()
+    placed_school = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
         fields = [
             "id", "user", "username", "full_name", "parent", "county",
             "home_latitude", "home_longitude", "exam_score", "has_results",
-            "results_uploaded_at", "created_at",
+            "results_uploaded_at", "placed_school", "created_at",
         ]
         read_only_fields = ["id", "user", "exam_score", "results_uploaded_at", "created_at"]
+
+    def get_placed_school(self, obj: Student):
+        placement = getattr(obj, "placement", None)
+        return placement.school.name if placement else None
 
     def get_full_name(self, obj: Student) -> str:
         return obj.user.get_full_name() or obj.user.username
@@ -55,10 +60,15 @@ class UploadResultsSerializer(serializers.Serializer):
 class PlacementSerializer(serializers.ModelSerializer):
     school = SchoolSerializer(read_only=True)
     student_name = serializers.SerializerMethodField()
+    student_county = serializers.CharField(source="student.county", read_only=True)
+    student_exam_score = serializers.FloatField(source="student.exam_score", read_only=True)
 
     class Meta:
         model = Placement
-        fields = ["id", "student", "student_name", "school", "run", "distance_km", "composite_score", "created_at"]
+        fields = [
+            "id", "student", "student_name", "student_county", "student_exam_score",
+            "school", "run", "distance_km", "composite_score", "created_at",
+        ]
 
     def get_student_name(self, obj: Placement) -> str:
         return obj.student.user.get_full_name() or obj.student.user.username
@@ -71,7 +81,9 @@ class PlacementRunSerializer(serializers.ModelSerializer):
             "id", "triggered_by", "status", "merit_weight", "proximity_weight",
             "students_considered", "students_placed", "average_distance_km",
             "median_distance_km", "proportion_within_threshold",
-            "overall_slot_utilization", "is_stable", "error_message",
+            "overall_slot_utilization", "is_stable",
+            "baseline_average_distance_km", "baseline_proportion_within_threshold",
+            "error_message",
             "started_at", "completed_at",
         ]
         read_only_fields = fields

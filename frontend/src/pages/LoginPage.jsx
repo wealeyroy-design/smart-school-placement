@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import AuthLayout from "../components/AuthLayout";
 import { roleHome } from "../auth/ProtectedRoute";
 
 export default function LoginPage() {
@@ -34,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
         <h1>Smart School Placement</h1>
         <p className="subtitle">Sign in to your account</p>
@@ -56,6 +57,6 @@ export default function LoginPage() {
           Don't have an account? <Link to="/register">Register</Link>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

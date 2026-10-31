@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import AuthLayout from "../components/AuthLayout";
 
 export default function RegisterPage() {
   const { register, login } = useAuth();
@@ -33,7 +34,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
         <h1>Create an account</h1>
         <p className="subtitle">Register as a student, parent, or administrator</p>
@@ -76,6 +77,6 @@ export default function RegisterPage() {
           Already have an account? <Link to="/login">Sign in</Link>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

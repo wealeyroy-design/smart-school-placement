@@ -1,27 +1,20 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 import OfflineMap from "./OfflineMap";
 
-/* "Use my current location" without any map account.
+/* Nearby schools, measured from the student's REGISTERED HOME.
  *
- * The browser's own Geolocation API reports the device's position after a
- * single permission prompt - no Google Maps sign-in, no API key, no cost.
- * The coordinates go straight to POST /api/distance/, which reuses the
- * placement algorithm's own distance maths to rank the nearest schools.
- * A manual entry box is provided for devices where location is blocked.
+ * The placement algorithm ranks schools by distance from a student's home,
+ * so this view starts from that same home location (loaded from the
+ * student's own profile). The browser's Geolocation API is still available
+ * as an optional, temporary alternative -- "Use my current location
+ * instead" -- but it only changes this view. It never changes the saved
+ * home or any placement. A manual entry box covers devices where location
+ * is blocked. No map account, API key or internet connection is needed.
  */
 
-const LAST_LOCATION_KEY = "ssp_last_location";
 const MAX_CANDIDATES = 6;
-
-function readLastLocation() {
-  try {
-    const raw = localStorage.getItem(LAST_LOCATION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
 
 function describeGeolocationError(error) {
   if (!error) return "Could not determine your location.";
@@ -41,17 +34,31 @@ function osmLink(lat, lon) {
   return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=13/${lat}/${lon}`;
 }
 
+function originDescription(origin, home) {
+  if (!origin) return "";
+  if (origin.kind === "home") {
+    return `Showing schools near your registered home${home?.county ? ` (${home.county})` : ""}.`;
+  }
+  if (origin.kind === "device") {
+    return "Showing schools near your current device location - this is not your registered home.";
+  }
+  return "Showing schools near the coordinates you entered - this is not your registered home.";
+}
+
 export default function LocationFinder() {
-  const [origin, setOrigin] = useState(readLastLocation);
+  const { user } = useAuth();
+  const isStudent = user?.role === "student";
+  const [home, setHome] = useState(null); // { latitude, longitude, county } from the student's profile
+  const [origin, setOrigin] = useState(null); // { latitude, longitude, kind: home | device | manual }
   const [results, setResults] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | locating
+  const [status, setStatus] = useState(isStudent ? "loading" : "idle"); // loading | idle | locating
   const [error, setError] = useState("");
   const [manual, setManual] = useState({ latitude: "", longitude: "" });
 
-  function lookup(point) {
+  const lookup = useCallback((point, kind) => {
     setError("");
     setStatus("locating");
-    api
+    return api
       .post("distance/", {
         latitude: point.latitude,
         longitude: point.longitude,
@@ -59,14 +66,44 @@ export default function LocationFinder() {
       })
       .then((res) => {
         setResults(res.data);
-        setOrigin(point);
-        localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify(point));
+        setOrigin({ latitude: point.latitude, longitude: point.longitude, kind });
       })
       .catch(() => {
-        setStatus("idle");
         setError("Could not calculate distances from that point. Please try again.");
+      })
+      .finally(() => setStatus("idle"));
+  }, []);
+
+  // On first load, start from the student's registered home.
+  useEffect(() => {
+    let cancelled = false;
+    // Only student accounts have a registered home; other roles start from GPS / manual entry.
+    if (!isStudent) return undefined;
+    api
+      .get("students/me/")
+      .then((res) => {
+        if (cancelled) return;
+        const { home_latitude, home_longitude, county } = res.data;
+        if (home_latitude == null || home_longitude == null) {
+          setStatus("idle");
+          return;
+        }
+        const homePoint = {
+          latitude: Number(home_latitude),
+          longitude: Number(home_longitude),
+          county,
+        };
+        setHome(homePoint);
+        lookup(homePoint, "home");
+      })
+      .catch(() => {
+        // No student profile (for example a parent account): fall back to GPS / manual entry.
+        if (!cancelled) setStatus("idle");
       });
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [lookup, isStudent]);
 
   function useMyLocation() {
     if (!("geolocation" in navigator)) {
@@ -77,11 +114,10 @@ export default function LocationFinder() {
     setStatus("locating");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        lookup({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: Math.round(position.coords.accuracy),
-        });
+        lookup(
+          { latitude: position.coords.latitude, longitude: position.coords.longitude },
+          "device"
+        );
       },
       (geoError) => {
         setStatus("idle");
@@ -103,41 +139,65 @@ export default function LocationFinder() {
       setError("Latitude must be between -90 and 90, longitude between -180 and 180.");
       return;
     }
-    lookup({ latitude, longitude });
+    lookup({ latitude, longitude }, "manual");
   }
+
+  const busy = status !== "idle";
+  const fromHome = origin?.kind === "home";
 
   return (
     <div className="location-finder">
+      {origin && results && <p className="origin-note"><strong>{originDescription(origin, home)}</strong></p>}
+
+      {!home && status === "idle" && !origin && (
+        <p className="muted">
+          No home location is saved for this account. Use your current location or type coordinates
+          below to look up nearby schools.
+        </p>
+      )}
+
       <div className="finder-actions">
-        <button type="button" className="btn-primary" onClick={useMyLocation} disabled={status === "locating"}>
-          {status === "locating" ? "Locating..." : "Use my current location"}
-        </button>
-        {origin && (
-          <button type="button" className="btn-secondary" onClick={() => lookup(origin)} disabled={status === "locating"}>
-            Use last location
+        {home && !fromHome && (
+          <button type="button" className="btn-primary" onClick={() => lookup(home, "home")} disabled={busy}>
+            Back to my home
           </button>
         )}
+        <button
+          type="button"
+          className={home && !fromHome ? "btn-secondary" : home ? "btn-secondary" : "btn-primary"}
+          onClick={useMyLocation}
+          disabled={busy}
+        >
+          {status === "locating"
+            ? "Locating..."
+            : home
+              ? "Use my current location instead"
+              : "Use my current location"}
+        </button>
       </div>
 
-      <p className="muted">
-        Your browser will ask permission to share a location once. No map account, no sign-in and no
-        internet connection are required.
-      </p>
+      {home && (
+        <p className="muted">
+          Using your current location only changes this view. Your saved home and your placement are
+          not affected.
+        </p>
+      )}
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {status === "locating" && <p className="muted">Working out where you are...</p>}
+      {status === "loading" && <p className="muted">Loading your home location...</p>}
+      {status === "locating" && <p className="muted">Finding nearby schools...</p>}
 
       {origin && results && (
         <>
           <div className="stat-row">
             <div className="stat-tile">
               <div className="value">{origin.latitude.toFixed(4)}</div>
-              <div className="label">Your latitude</div>
+              <div className="label">{fromHome ? "Home latitude" : "Latitude"}</div>
             </div>
             <div className="stat-tile">
               <div className="value">{origin.longitude.toFixed(4)}</div>
-              <div className="label">Your longitude</div>
+              <div className="label">{fromHome ? "Home longitude" : "Longitude"}</div>
             </div>
             <div className="stat-tile">
               <div className="value">{results.length}</div>
@@ -170,9 +230,7 @@ export default function LocationFinder() {
             ))}
           </div>
 
-          {results.length === 0 && (
-            <p className="muted">No schools were found near that point.</p>
-          )}
+          {results.length === 0 && <p className="muted">No schools were found near that point.</p>}
         </>
       )}
 
@@ -199,7 +257,7 @@ export default function LocationFinder() {
               onChange={(e) => setManual({ ...manual, longitude: e.target.value })}
             />
           </label>
-          <button type="submit" className="btn-primary">
+          <button type="submit" className="btn-primary" disabled={busy}>
             Find schools
           </button>
         </form>

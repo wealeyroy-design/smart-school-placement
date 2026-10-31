@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart School Placement — Backend</title>
+<style>
+  :root { --green:#1d6f42; --dark:#124a2b; --muted:#6b7280; --border:#dde5e1; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; background:#eef3f1; color:#1f2937; }
+  header { background:linear-gradient(120deg,#0d3520,var(--dark) 55%,var(--green)); color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:24px; }
+  header p { margin:0; opacity:.85; }
+  .status { display:inline-block; margin-top:12px; padding:4px 12px; border-radius:999px; font-size:13px; font-weight:600;
+            background:{% if db_ok %}#e8f5ee{% else %}#fdecea{% endif %}; color:{% if db_ok %}#1d6f42{% else %}#b3261e{% endif %}; }
+  main { max-width:980px; margin:0 auto; padding:24px 20px 40px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-bottom:22px; }
+  a.card { display:block; text-decoration:none; color:inherit; background:#fff; border:1px solid var(--border);
+           border-radius:12px; padding:18px; border-top:4px solid var(--green); transition:transform .15s, box-shadow .15s; }
+  a.card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(16,42,28,.12); }
+  a.card h2 { margin:0 0 6px; font-size:17px; color:var(--dark); }
+  a.card p { margin:0; font-size:14px; color:var(--muted); }
+  a.card code { color:var(--green); }
+  section { background:#fff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:18px; }
+  section h3 { margin:0 0 12px; font-size:15px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+  .stat { background:#f7faf8; border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+  .stat b { display:block; font-size:22px; color:var(--dark); }
+  .stat span { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { background:#e4f2ea; color:var(--dark); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  code { font-family:Consolas,ui-monospace,monospace; font-size:13px; }
+  .err { background:#fdecea; color:#b3261e; padding:10px 12px; border-radius:8px; font-size:14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Smart School Placement — Backend</h1>
+  <p>The API server is running. Students, parents and administrators use the web app; this page is for you, the developer.</p>
+  <span class="status">{% if db_ok %}● Connected to {{ engine }} ({{ db_name }}){% else %}● Database problem{% endif %}</span>
+</header>
+<main>
+  <div class="grid">
+    <a class="card" href="http://localhost:5173/" target="_blank" rel="noopener">
+      <h2>Open the web app →</h2>
+      <p>The React portals for students, parents, school and Ministry administrators (<code>localhost:5173</code>).</p>
+    </a>
+    <a class="card" href="/admin/">
+      <h2>Admin back office →</h2>
+      <p>Browse and edit every record, approve appeals in bulk and run placements with one button.</p>
+    </a>
+    <a class="card" href="/api/">
+      <h2>REST API →</h2>
+      <p>The JSON API used by the web app. Most endpoints need you to be logged in.</p>
+    </a>
+  </div>
+
+  {% if db_ok %}
+  <section>
+    <h3>What's in the database</h3>
+    <div class="stats">
+      <div class="stat"><b>{{ stats.students }}</b><span>Students</span></div>
+      <div class="stat"><b>{{ stats.schools }}</b><span>Schools</span></div>
+      <div class="stat"><b>{{ stats.placements }}</b><span>Placements</span></div>
+      <div class="stat"><b>{{ stats.runs }}</b><span>Placement runs</span></div>
+      <div class="stat"><b>{{ stats.pending_appeals }}</b><span>Pending appeals</span></div>
+    </div>
+  </section>
+  {% else %}
+  <section>
+    <h3>The database isn't ready</h3>
+    <p class="err">{{ db_error }}</p>
+    <p>Usually this means the database tables haven't been created yet. Run <code>python manage.py migrate</code> in the <code>backend</code> folder, then reload this page.</p>
+  </section>
+  {% endif %}
+
+  {% if debug %}
+  <section>
+    <h3>Demo accounts (password <code>demo-pass-1234</code>)</h3>
+    <table>
+      <tr><th>Username</th><th>Role</th><th>Use it for</th></tr>
+      <tr><td><code>ministry_admin</code></td><td>Ministry administrator</td><td>Running placements, exam results, analytics, appeals. Also logs in to the admin back office.</td></tr>
+      <tr><td><code>school_admin</code></td><td>School administrator</td><td>School details, capacity and placed students</td></tr>
+      <tr><td><code>parent_demo</code></td><td>Parent/guardian</td><td>Following two linked children's placements</td></tr>
+      <tr><td><code>student0001</code> …</td><td>Student</td><td>Profile, placement, nearby schools, appeals</td></tr>
+    </table>
+  </section>
+  {% endif %}
+
+  <section>
+    <h3>Useful commands (run inside the <code>backend</code> folder)</h3>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>python manage.py migrate</code></td><td>Creates or updates the database tables</td></tr>
+      <tr><td><code>python manage.py seed_demo_data</code></td><td>Adds demo accounts, 100 schools, 600 students and sample appeals (only into an empty database)</td></tr>
+      <tr><td><code>python manage.py run_placement</code></td><td>Runs the placement algorithm (same as the button in the admin)</td></tr>
+      <tr><td><code>python manage.py createsuperuser</code></td><td>Creates your own admin login</td></tr>
+      <tr><td><code>python manage.py test</code></td><td>Runs the 35 backend tests</td></tr>
+    </table>
+  </section>
+</main>
+</body>
+</html>

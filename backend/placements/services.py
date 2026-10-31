@@ -21,7 +21,7 @@ from placement_algorithm.data_gen import SchoolCategory as AlgoSchoolCategory
 from placement_algorithm.data_gen import Student as AlgoStudent
 from placement_algorithm.distance import Coordinates
 from placement_algorithm.evaluate import summarize
-from placement_algorithm.matching import is_stable, match_students_to_schools
+from placement_algorithm.matching import baseline_merit_only_allocation, is_stable, match_students_to_schools
 from placement_algorithm.scoring import ScoreWeights, composite_score, eligible_schools
 
 from .models import Placement, PlacementRun, School, Student
@@ -127,6 +127,13 @@ def run_placement(
             stability_check=stability_result,
         )
 
+        # Section 2.3's comparison: the same cohort under the merit-only,
+        # geography-blind baseline that simulates the current system.
+        baseline_run = baseline_merit_only_allocation(algo_students, algo_schools)
+        baseline_summary = summarize(
+            baseline_run, students_total=len(algo_students), schools=algo_schools, threshold_km=threshold_km
+        )
+
         with transaction.atomic():
             # A run replaces the previous allocation entirely.
             Placement.objects.filter(student__in=db_students).delete()
@@ -149,6 +156,8 @@ def run_placement(
             run.proportion_within_threshold = summary.proportion_within_threshold
             run.overall_slot_utilization = summary.overall_slot_utilization
             run.is_stable = summary.is_stable
+            run.baseline_average_distance_km = baseline_summary.average_distance_km
+            run.baseline_proportion_within_threshold = baseline_summary.proportion_within_threshold
             run.completed_at = timezone.now()
             run.save()
 

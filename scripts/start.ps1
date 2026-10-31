@@ -57,6 +57,8 @@ Start-Sleep -Seconds 1
 
 # --- backend (SQLite so no Postgres install is needed) ---
 $env:DB_ENGINE = "sqlite"
+Write-Host "  applying database migrations ..."
+& $venvPython (Join-Path $backend "manage.py") migrate --noinput | Out-Null
 Write-Host "  starting API on http://127.0.0.1:8000 ..."
 Start-Process -FilePath $venvPython `
     -ArgumentList "manage.py", "runserver", "127.0.0.1:8000", "--noreload" `

@@ -257,3 +257,31 @@ class DistanceEndpointTests(APITestCase):
         self.client.force_authenticate(user=other.user)
         response = self.client.post("/api/distance/", {"student_id": self.student.id})
         self.assertEqual(response.status_code, 403)
+
+
+class PolishPassTests(APITestCase):
+    """Run-vs-baseline comparison, results search, and page_size support."""
+
+    def setUp(self):
+        self.ministry = User.objects.create_user("ministry", password="pw", role="ministry_admin")
+        for i in range(3):
+            make_school(name=f"School {i}", latitude=-1.29 + i * 0.1, longitude=36.82, capacity=5)
+        for i in range(60):
+            make_student_with_user(f"pupil{i:02d}", exam_score=200 + i, county="Nairobi" if i % 2 else "Kiambu")
+        self.client.force_authenticate(self.ministry)
+
+    def test_run_records_merit_only_baseline_metrics(self):
+        response = self.client.post("/api/placement-runs/trigger/", {"merit_weight": 0.6, "proximity_weight": 0.4})
+        self.assertEqual(response.status_code, 201)
+        self.assertIsNotNone(response.data["baseline_average_distance_km"])
+        self.assertIsNotNone(response.data["baseline_proportion_within_threshold"])
+
+    def test_page_size_query_param_is_honoured(self):
+        response = self.client.get("/api/students/?page_size=100")
+        self.assertEqual(response.data["count"], 60)
+        self.assertEqual(len(response.data["results"]), 60)
+
+    def test_students_can_be_searched_by_county(self):
+        response = self.client.get("/api/students/?search=Kiambu&page_size=100")
+        self.assertEqual(response.data["count"], 30)
+        self.assertTrue(all(s["county"] == "Kiambu" for s in response.data["results"]))

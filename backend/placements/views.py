@@ -1,7 +1,7 @@
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -68,6 +68,9 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     serializer_class = StudentSerializer
     http_method_names = ["get", "post", "patch", "head", "options"]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["user__username", "user__first_name", "user__last_name", "county"]
+    ordering_fields = ["exam_score", "county", "user__last_name"]
 
     def get_permissions(self):
         if self.action in ("upload_results",):
@@ -76,7 +79,7 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        base = Student.objects.select_related("user", "parent")
+        base = Student.objects.select_related("user", "parent", "placement__school").order_by("user__username")
         if user.is_ministry_admin:
             return base.all()
         if user.is_school_admin:

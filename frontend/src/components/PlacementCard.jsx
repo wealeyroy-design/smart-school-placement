@@ -13,10 +13,15 @@ export default function PlacementCard({ placement, loading }) {
   const { school, distance_km, composite_score } = placement;
   return (
     <div>
-      <h3>{school.name}</h3>
-      <p className="muted" style={{ marginTop: -8 }}>
-        {school.county} &middot; {school.category.replace("_", "-")}
-      </p>
+      <div className="placement-head">
+        <div>
+          <h3>{school.name}</h3>
+          <p className="muted" style={{ marginTop: -8 }}>
+            {school.county} County &middot; {school.category.replace("_", "-")} school
+          </p>
+        </div>
+        <span className="badge badge-approved">Placed</span>
+      </div>
       <div className="stat-row">
         <div className="stat-tile">
           <div className="value">{distance_km.toFixed(1)} km</div>
@@ -31,6 +36,10 @@ export default function PlacementCard({ placement, loading }) {
           <div className="label">School performance rating</div>
         </div>
       </div>
+      <p className="muted">
+        The composite match score combines your exam performance with how close the school is to your
+        registered home, using the weights set by the Ministry of Education.
+      </p>
     </div>
   );
 }

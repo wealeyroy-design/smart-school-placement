@@ -6,12 +6,18 @@
  * our own database, so the map keeps working in a demo hall with bad WiFi
  * (or none at all). It is a schematic distance diagram, not a navigation
  * map, which is also why it carries no third-party attribution.
+ *
+ * Radial distances use a square-root scale so that schools close to the
+ * user are spread out and stay readable; each ring is still labelled with
+ * its true distance in km.
  */
 
 const KM_PER_DEG = 111.32;
 const WIDTH = 340;
 const HEIGHT = 280;
 const PADDING = 26;
+const MIN_FIRST_RING_PX = 22; // keep the first ring clear of the "You" marker
+const MIN_RING_GAP_PX = 13; // keep ring labels from overlapping
 
 function project(lat, lon, lat0, lon0) {
   return {
@@ -20,9 +26,43 @@ function project(lat, lon, lat0, lon0) {
   };
 }
 
-function niceRings(maxKm) {
+// Pick only as many "nice" rings as can be labelled legibly.
+function chooseRings(maxKm, radiusFor) {
   const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 200];
-  return candidates.filter((r) => r < maxKm);
+  const chosen = [];
+  let lastPx = MIN_FIRST_RING_PX - MIN_RING_GAP_PX;
+  for (const km of candidates) {
+    if (km > maxKm) break;
+    const px = radiusFor(km);
+    if (px - lastPx >= MIN_RING_GAP_PX) {
+      chosen.push({ km, px });
+      lastPx = px;
+    }
+  }
+  return chosen;
+}
+
+// Text with a light outline behind it, drawn as two elements so it renders
+// the same in every browser.
+function HaloText({ className, children, ...props }) {
+  return (
+    <>
+      <text
+        {...props}
+        className={className}
+        fill="#f7fbf9"
+        stroke="#f7fbf9"
+        strokeWidth="3.5"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {children}
+      </text>
+      <text {...props} className={className}>
+        {children}
+      </text>
+    </>
+  );
 }
 
 export default function OfflineMap({ origin, schools }) {
@@ -39,14 +79,19 @@ export default function OfflineMap({ origin, schools }) {
 
   const maxKm = Math.max(...points.map((p) => p.km), 1);
   const usable = Math.min(WIDTH, HEIGHT) / 2 - PADDING;
-  const scale = usable / maxKm;
   const cx = WIDTH / 2;
   const cy = HEIGHT / 2;
 
-  const toScreen = (p) => ({ x: cx + p.x * scale, y: cy - p.y * scale });
+  // Square-root radial scale: true distance km -> pixels from the centre.
+  const radiusFor = (km) => usable * Math.sqrt(km / maxKm);
 
-  const rings = niceRings(maxKm);
-  const scaleBarKm = [1, 2, 5, 10, 20, 50].reverse().find((v) => v * scale <= 90) ?? 1;
+  const toScreen = (p) => {
+    if (p.km === 0) return { x: cx, y: cy };
+    const k = radiusFor(p.km) / p.km;
+    return { x: cx + p.x * k, y: cy + p.y * k };
+  };
+
+  const rings = chooseRings(maxKm, radiusFor);
 
   return (
     <div className="map-wrap">
@@ -75,45 +120,52 @@ export default function OfflineMap({ origin, schools }) {
         />
 
         {/* distance rings around the user */}
-        {rings.map((r) => (
-          <g key={r}>
-            <circle
-              cx={cx}
-              cy={cy}
-              r={r * scale}
-              fill="none"
-              stroke="#1d6f42"
-              strokeOpacity="0.22"
-              strokeDasharray="4 4"
-            />
-            <text x={cx + r * scale - 2} y={cy - 4} className="map-ring-label">
-              {r} km
-            </text>
-          </g>
+        {rings.map(({ km, px }) => (
+          <circle
+            key={km}
+            cx={cx}
+            cy={cy}
+            r={px}
+            fill="none"
+            stroke="#1d6f42"
+            strokeOpacity="0.22"
+            strokeDasharray="4 4"
+          />
         ))}
 
         {/* schools */}
         {points.map((p) => {
           const s = toScreen(p);
-          const r = Math.max(4, Math.min(11, 11 - p.km * 0.25));
+          const r = Math.max(4, Math.min(9, 9 - p.km * 0.12));
           return (
             <g key={p.school_id}>
-              <title>
-                {p.name} - {p.distance_km} km
-              </title>
+              <title>{`${p.name} - ${p.distance_km} km`}</title>
               <circle cx={s.x} cy={s.y} r={r} fill="#1d6f42" fillOpacity="0.85" />
               <circle cx={s.x} cy={s.y} r={r + 2.5} fill="none" stroke="#ffffff" strokeWidth="1.5" />
             </g>
           );
         })}
 
+        {/* ring labels: one per ring, at the top of the ring, drawn above the dots */}
+        {rings.map(({ km, px }) => (
+          <HaloText
+            key={`label-${km}`}
+            x={cx}
+            y={cy - px - 3}
+            textAnchor="middle"
+            className="map-ring-label"
+          >
+            {km} km
+          </HaloText>
+        ))}
+
         {/* the user */}
         <g>
           <circle cx={cx} cy={cy} r="11" fill="#d4a017" fillOpacity="0.22" />
           <circle cx={cx} cy={cy} r="6" fill="#d4a017" stroke="#ffffff" strokeWidth="2" />
-          <text x={cx + 12} y={cy + 4} className="map-you-label">
+          <HaloText x={cx} y={cy + 24} textAnchor="middle" className="map-you-label">
             You
-          </text>
+          </HaloText>
         </g>
 
         {/* north arrow */}
@@ -123,27 +175,11 @@ export default function OfflineMap({ origin, schools }) {
             N
           </text>
         </g>
-
-        {/* scale bar */}
-        <g transform={`translate(18 ${HEIGHT - 20})`}>
-          <line x1="0" y1="0" x2={scaleBarKm * scale} y2="0" stroke="#124a2b" strokeWidth="2" />
-          <line x1="0" y1="-4" x2="0" y2="4" stroke="#124a2b" strokeWidth="2" />
-          <line
-            x1={scaleBarKm * scale}
-            y1="-4"
-            x2={scaleBarKm * scale}
-            y2="4"
-            stroke="#124a2b"
-            strokeWidth="2"
-          />
-          <text x={scaleBarKm * scale + 6} y="4" className="map-ring-label">
-            {scaleBarKm} km
-          </text>
-        </g>
       </svg>
       <p className="muted map-caption">
         Schematic distance map drawn from our own school database - no map account or internet
-        connection needed. Not to scale for navigation.
+        connection needed. Rings show true distance; spacing is compressed so nearby schools stay
+        readable. Not to scale for navigation.
       </p>
     </div>
   );

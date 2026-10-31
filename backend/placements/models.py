@@ -139,6 +139,10 @@ class PlacementRun(models.Model):
     proportion_within_threshold = models.FloatField(null=True, blank=True)
     overall_slot_utilization = models.FloatField(null=True, blank=True)
     is_stable = models.BooleanField(null=True, blank=True)
+    # Same cohort allocated by the merit-only, geography-blind baseline
+    # (section 2.3's comparison), recorded alongside each run.
+    baseline_average_distance_km = models.FloatField(null=True, blank=True)
+    baseline_proportion_within_threshold = models.FloatField(null=True, blank=True)
     error_message = models.TextField(blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)

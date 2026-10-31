@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
+import BarChart from "../../components/BarChart";
+import PageHeader from "../../components/PageHeader";
 import SchoolForm from "./SchoolForm";
 
 export default function SchoolAdminPortal() {
@@ -33,9 +35,20 @@ export default function SchoolAdminPortal() {
   if (schools === undefined) return <p className="page-loading">Loading...</p>;
 
   const selected = schools.find((s) => s.id === selectedId);
+  const utilization = selected && selected.capacity ? (selected.filled_slots / selected.capacity) * 100 : 0;
+  const avgDistance =
+    placedStudents && placedStudents.length
+      ? placedStudents.reduce((sum, p) => sum + p.distance_km, 0) / placedStudents.length
+      : null;
+  const within50 = placedStudents ? placedStudents.filter((p) => p.distance_km <= 50).length : 0;
 
   return (
     <>
+      <PageHeader
+        title="School Administrator Portal"
+        subtitle="Manage your school's details and capacity, and view the students placed in it."
+      />
+
       <div className="card">
         <h2 id="schools">Your schools</h2>
         {schools.length === 0 ? (
@@ -67,7 +80,39 @@ export default function SchoolAdminPortal() {
       </div>
 
       {selected && (
-        <div className="grid-2">
+        <div className="card">
+          <h2 id="overview">{selected.name}</h2>
+          <p className="muted" style={{ marginTop: "-0.4rem" }}>
+            {selected.county} County &middot; {selected.category.replace("_", "-")} school &middot; performance
+            rating {selected.performance_rating.toFixed(1)}
+          </p>
+          <div className="stat-row">
+            <div className="stat-tile">
+              <div className="value">{selected.capacity}</div>
+              <div className="label">Total capacity</div>
+            </div>
+            <div className="stat-tile">
+              <div className="value">{selected.filled_slots}</div>
+              <div className="label">Slots filled</div>
+            </div>
+            <div className="stat-tile">
+              <div className="value">{selected.available_slots}</div>
+              <div className="label">Slots available</div>
+            </div>
+            <div className="stat-tile">
+              <div className="value">{avgDistance == null ? "—" : `${avgDistance.toFixed(1)} km`}</div>
+              <div className="label">Avg. student distance</div>
+            </div>
+          </div>
+          <BarChart
+            max={100}
+            rows={[{ label: "Capacity used", value: utilization, display: `${utilization.toFixed(0)}%` }]}
+          />
+        </div>
+      )}
+
+      {selected && (
+        <div className="grid-2 school-grid">
           <div className="card">
             <h2 id="details">Capacity & details</h2>
             <SchoolForm school={selected} onSaved={loadSchools} />
@@ -80,22 +125,37 @@ export default function SchoolAdminPortal() {
             ) : placedStudents.length === 0 ? (
               <p className="muted">No students placed here yet.</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Student</th>
-                    <th>Distance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {placedStudents.map((p) => (
-                    <tr key={p.id}>
-                      <td>{p.student_name}</td>
-                      <td>{p.distance_km.toFixed(1)} km</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <>
+                <p className="muted" style={{ marginTop: 0 }}>
+                  {within50} of {placedStudents.length} placed students live within 50 km of the school.
+                </p>
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Home county</th>
+                        <th>Score</th>
+                        <th>Distance</th>
+                        <th>Match</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...placedStudents]
+                        .sort((a, b) => (b.student_exam_score ?? 0) - (a.student_exam_score ?? 0))
+                        .map((p) => (
+                          <tr key={p.id}>
+                            <td className="nowrap">{p.student_name}</td>
+                            <td>{p.student_county}</td>
+                            <td>{p.student_exam_score?.toFixed(1)}</td>
+                            <td>{p.distance_km.toFixed(1)} km</td>
+                            <td>{(p.composite_score * 100).toFixed(0)}%</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>
