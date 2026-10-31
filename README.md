@@ -1,7 +1,7 @@
 # Smart School Placement Optimization System
 
 Final year project — Kabarak University, Department of Computer Science.
-Student: Kibiwott Roy Kipkoech (CS/MK/0693/09/23). Supervisor: Mr Andrew Kipkebut.
+Student: Kibiwott Roy Kipkoech (CS/MK/0693/09/23). Supervisor: Dr Andrew Kipkebut.
 
 A full-stack web system that places students into secondary schools using a
 proximity-weighted, merit-aware matching algorithm, instead of Kenya's current
